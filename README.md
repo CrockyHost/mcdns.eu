@@ -25,3 +25,7 @@ local environment files. These files are not tracked by Git.
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+## Deployment
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for cPanel and shared hosting deployment.
