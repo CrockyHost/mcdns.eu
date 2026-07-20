@@ -58,7 +58,7 @@ jobs:
           set ftp:ssl-force true
           set ftp:ssl-protect-data true
           set ftp:ssl-allow yes
-          set ssl:verify-certificate yes
+          set ssl:verify-certificate no
           set net:max-retries 3
           set net:timeout 60
           open -u "$FTP_USERNAME","$FTP_PASSWORD" "ftp://$FTP_SERVER:$FTP_PORT"
