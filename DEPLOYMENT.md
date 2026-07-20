@@ -7,7 +7,9 @@ dependencies and deploys the application through FTPS.
 ## One-time cPanel setup
 
 1. Select PHP 8.4 or a newer compatible PHP version for the domain.
-2. Set the domain document root to the repository's `public` directory.
+2. Keep the domain document root at the FTP account home directory. The root
+   `.htaccess` file routes every request internally to `public` and prevents
+   directory listings, so the application source is not exposed.
 3. Create a MySQL database and user with cPanel's MySQL Database Wizard.
 4. Use File Manager to create `.env` beside `composer.json`, using
    `.env.example` as the template. Do not upload or commit this file.
