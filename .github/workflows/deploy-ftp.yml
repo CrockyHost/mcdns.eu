@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Check out source code
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -45,30 +47,80 @@ jobs:
       - name: Install lftp
         run: sudo apt-get update && sudo apt-get install --yes lftp
 
+      - name: Determine deployment scope
+        id: deployment
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_PORT: ${{ secrets.FTP_PORT }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          lftp <<EOF || true
+          set cmd:fail-exit yes
+          set ftp:ssl-force true
+          set ftp:ssl-protect-data true
+          set ssl:verify-certificate no
+          open -u "$FTP_USERNAME","$FTP_PASSWORD" "ftp://$FTP_SERVER:$FTP_PORT"
+          get -O . .mcdns-deploy-sha
+          bye
+          EOF
+
+          if [[ -s .mcdns-deploy-sha ]] && git cat-file -e "$(tr -d '\r\n' < .mcdns-deploy-sha)^{commit}" 2>/dev/null; then
+            echo "mode=incremental" >> "$GITHUB_OUTPUT"
+            echo "base_sha=$(tr -d '\r\n' < .mcdns-deploy-sha)" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=full" >> "$GITHUB_OUTPUT"
+          fi
+
+          printf '%s\n' "$GITHUB_SHA" > .mcdns-deploy-sha
+
       - name: Deploy through FTPS
         env:
+          DEPLOYMENT_MODE: ${{ steps.deployment.outputs.mode }}
+          DEPLOYMENT_BASE_SHA: ${{ steps.deployment.outputs.base_sha }}
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_PORT: ${{ secrets.FTP_PORT }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR }}
         run: |
-          lftp <<EOF
-          set cmd:fail-exit yes
-          set ftp:ssl-force true
-          set ftp:ssl-protect-data true
-          set ftp:ssl-allow yes
-          set ssl:verify-certificate no
-          set net:max-retries 3
-          set net:timeout 60
-          open -u "$FTP_USERNAME","$FTP_PASSWORD" "ftp://$FTP_SERVER:$FTP_PORT"
-          mirror --reverse --only-newer --no-perms --parallel=1 --verbose \
-            --exclude-glob .env \
-            --exclude-glob .env.* \
-            --exclude-glob .git* \
-            --exclude-glob .github/* \
-            --exclude-glob node_modules/* \
-            --exclude-glob var/* \
-            ./ "$FTP_SERVER_DIR"
-          bye
-          EOF
+          set -euo pipefail
+
+          if [[ "$DEPLOYMENT_MODE" == "incremental" ]]; then
+            {
+              git diff --name-only --diff-filter=ACMRT "$DEPLOYMENT_BASE_SHA" "$GITHUB_SHA"
+
+              if git diff --name-only "$DEPLOYMENT_BASE_SHA" "$GITHUB_SHA" | grep -Eq '^(composer\.(json|lock)|symfony\.lock)$'; then
+                find vendor -type f
+              fi
+
+              if git diff --name-only "$DEPLOYMENT_BASE_SHA" "$GITHUB_SHA" | grep -Eq '^(assets/|importmap\.php$)'; then
+                find public/assets -type f
+              fi
+            } | grep -Ev '^(\.env($|\.)|\.git($|/)|\.github($|/)|node_modules($|/)|var($|/))' | sort -u > .deployment-files
+          fi
+
+          {
+            echo 'set cmd:fail-exit yes'
+            echo 'set ftp:ssl-force true'
+            echo 'set ftp:ssl-protect-data true'
+            echo 'set ftp:ssl-allow yes'
+            echo 'set ssl:verify-certificate no'
+            echo 'set net:max-retries 3'
+            echo 'set net:timeout 60'
+            printf 'open -u "%s","%s" "ftp://%s:%s"\n' "$FTP_USERNAME" "$FTP_PASSWORD" "$FTP_SERVER" "$FTP_PORT"
+
+            if [[ "$DEPLOYMENT_MODE" == "full" ]]; then
+              printf 'mirror --reverse --only-newer --no-perms --parallel=1 --verbose --exclude "^\\.env($|\\.)" --exclude "^\\.git($|/)" --exclude "^\\.github($|/)" --exclude "^node_modules($|/)" --exclude "^var($|/)" --exclude "^\\.mcdns-deploy-sha$" ./ "%s"\n' "$FTP_SERVER_DIR"
+            else
+              while IFS= read -r file; do
+                [[ -z "$file" ]] && continue
+                directory=$(dirname "$file")
+                printf 'mkdir -p "%s"\n' "$directory"
+                printf 'put -O "%s" "%s"\n' "$directory" "$file"
+              done < .deployment-files
+            fi
+
+            printf 'put -O "%s" .mcdns-deploy-sha\n' "$FTP_SERVER_DIR"
+            echo 'bye'
+          } | lftp
