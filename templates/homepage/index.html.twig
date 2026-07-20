@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}mcdns.eu | Minecraft server addresses{% endblock %}
+
+{% block body %}
+    <main class="landing-page">
+        <nav class="site-nav" aria-label="Main navigation">
+            <a class="brand" href="{{ path('app_home') }}" aria-label="mcdns.eu home">
+                <span class="brand-mark" aria-hidden="true"><span></span></span>
+                <span>mcdns.eu</span>
+            </a>
+            <a class="nav-link" href="#how-it-works">How it works <i class="fa-solid fa-arrow-down" aria-hidden="true"></i></a>
+        </nav>
+
+        <section class="hero" aria-labelledby="hero-title">
+            <div class="hero-copy">
+                <p class="eyebrow"><span></span> Minecraft server addresses</p>
+                <h1 id="hero-title">Your server.<br><em>A better address.</em></h1>
+                <p class="hero-lede">Add your server IP and port. Choose a name. Players connect with a clean <strong>.mcdns.eu</strong> address.</p>
+                <div class="hero-actions">
+                    <a class="button button-primary" href="#how-it-works">Get your address <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                </div>
+            </div>
+
+            <div class="connection-card" aria-label="Example Minecraft server address">
+                <div class="card-topline"><span>SERVER ADDRESS</span><span class="status-dot">READY</span></div>
+                <div class="server-address"><span class="address-cursor" aria-hidden="true"></span><span>play.mcdns.eu</span></div>
+                <div class="connection-path">
+                    <div class="path-row">
+                        <span class="path-icon"><i class="fa-solid fa-server" aria-hidden="true"></i></span>
+                        <div><small>YOUR SERVER</small><strong>203.0.113.42:25578</strong></div>
+                    </div>
+                    <div class="path-line" aria-hidden="true"></div>
+                    <div class="path-row">
+                        <span class="path-icon path-icon-green"><i class="fa-solid fa-gamepad" aria-hidden="true"></i></span>
+                        <div><small>PLAYERS JOIN WITH</small><strong>play.mcdns.eu</strong></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="how-it-works" id="how-it-works" aria-labelledby="how-title">
+            <div class="section-heading">
+                <p class="eyebrow"><span></span> Three quick steps</p>
+                <h2 id="how-title">Set it once.<br>Share it everywhere.</h2>
+            </div>
+            <ol class="steps">
+                <li><span class="step-icon"><i class="fa-solid fa-network-wired" aria-hidden="true"></i></span><div><strong>Enter your server</strong><p>Add the IP address and port your Minecraft server already uses.</p></div></li>
+                <li><span class="step-icon"><i class="fa-solid fa-tag" aria-hidden="true"></i></span><div><strong>Pick your name</strong><p>Choose an address like <code>survival.mcdns.eu</code>.</p></div></li>
+                <li><span class="step-icon"><i class="fa-solid fa-plug" aria-hidden="true"></i></span><div><strong>Players connect</strong><p>They use your new address. No port to remember or type.</p></div></li>
+            </ol>
+        </section>
+
+        <footer class="site-footer">
+            <span class="brand"><span class="brand-mark" aria-hidden="true"><span></span></span>mcdns.eu</span>
+            <span>Simple addresses for Minecraft servers.</span>
+        </footer>
+    </main>
+{% endblock %}
