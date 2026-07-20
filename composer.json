@@ -1,4 +1,6 @@
 {
+    "name": "mcdns-eu/mcdns-eu",
+    "description": "Open-source Minecraft subdomain management powered by Cloudflare DNS.",
     "type": "project",
     "license": "MIT",
     "minimum-stability": "stable",
