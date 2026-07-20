@@ -33,19 +33,41 @@ jobs:
       - name: Install production dependencies
         run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
+      - name: Compile public assets
+        env:
+          APP_ENV: prod
+          APP_SECRET: build-only-secret
+          DEFAULT_URI: https://mcdns.eu
+          DATABASE_URL: sqlite:///%kernel.project_dir%/var/build.db
+        run: php bin/console asset-map:compile --env=prod --no-debug
+
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install --yes lftp
+
       - name: Deploy through FTPS
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps
-          port: ${{ secrets.FTP_PORT }}
-          server-dir: ${{ secrets.FTP_SERVER_DIR }}
-          exclude: |
-            **/.git*/**
-            **/.github/**
-            **/.env
-            **/.env.*
-            **/node_modules/**
-            **/var/**
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_PORT: ${{ secrets.FTP_PORT }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR }}
+        run: |
+          lftp <<EOF
+          set cmd:fail-exit yes
+          set ftp:ssl-force true
+          set ftp:ssl-protect-data true
+          set ftp:ssl-allow yes
+          set ssl:verify-certificate yes
+          set net:max-retries 3
+          set net:timeout 60
+          open -u "$FTP_USERNAME","$FTP_PASSWORD" "ftp://$FTP_SERVER:$FTP_PORT"
+          mirror --reverse --only-newer --no-perms --parallel=1 --verbose \
+            --exclude-glob .env \
+            --exclude-glob .env.* \
+            --exclude-glob .git* \
+            --exclude-glob .github/* \
+            --exclude-glob node_modules/* \
+            --exclude-glob var/* \
+            ./ "$FTP_SERVER_DIR"
+          bye
+          EOF
