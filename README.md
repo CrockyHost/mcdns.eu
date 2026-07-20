@@ -1,28 +1,27 @@
 # mcdns.eu
 
-O platformă open-source pentru alocarea de adrese Minecraft de forma
-`<nume>.mcdns.eu`. Proiectul va administra, prin API-ul Cloudflare, înregistrările
-DNS necesare pentru a direcționa jucătorii către servere Minecraft care rulează
-pe porturi non-standard, fără ca aceștia să fie nevoiți să specifice portul la
-conectare.
+An open-source platform for allocating Minecraft addresses in the form of
+`<name>.mcdns.eu`. The project will use the Cloudflare API to manage the DNS
+records required to route players to Minecraft servers running on non-standard
+ports, without requiring players to specify a port when connecting.
 
-## Tehnologii
+## Technology
 
 - PHP 8.4+
 - Symfony 8.1
 - Doctrine ORM
-- Cloudflare API (integrare planificată)
+- Cloudflare API (planned integration)
 
-## Pornire locală
+## Local development
 
 ```bash
 composer install
 php -S localhost:8000 -t public
 ```
 
-În dezvoltare, setează secretele (inclusiv tokenul Cloudflare) numai în
-`.env.local`; acest fișier nu este versionat.
+During development, configure secrets, including the Cloudflare token, only in
+local environment files. These files are not tracked by Git.
 
-## Licență
+## License
 
-Acest proiect este licențiat sub [MIT](LICENSE).
+This project is licensed under the [MIT License](LICENSE).
