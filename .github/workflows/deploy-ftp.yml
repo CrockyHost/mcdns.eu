@@ -36,6 +36,9 @@ jobs:
       - name: Prepare build environment
         run: cp .env.example .env
 
+      - name: Install import map assets
+        run: php bin/console importmap:install --env=prod --no-debug
+
       - name: Compile public assets
         run: php bin/console asset-map:compile --env=prod --no-debug
 
