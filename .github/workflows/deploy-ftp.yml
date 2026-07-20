@@ -33,12 +33,10 @@ jobs:
       - name: Install production dependencies
         run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
+      - name: Prepare build environment
+        run: cp .env.example .env
+
       - name: Compile public assets
-        env:
-          APP_ENV: prod
-          APP_SECRET: build-only-secret
-          DEFAULT_URI: https://mcdns.eu
-          DATABASE_URL: sqlite:///%kernel.project_dir%/var/build.db
         run: php bin/console asset-map:compile --env=prod --no-debug
 
       - name: Install lftp
